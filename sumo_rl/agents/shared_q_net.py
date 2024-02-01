@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class SharedQNetwork(nn.Module):
     def __init__(self, input_size, output_size):
         super().__init__()
@@ -11,11 +12,10 @@ class SharedQNetwork(nn.Module):
         x = torch.relu(self.fc(x))
         x = self.fc2(x)
         return x
-    
     def save(self, name):
-        name = name + ".pt"
+        name = ".\\models\\" + name + ".pt"
         torch.save(self.state_dict(), name)
 
     def load(self, name):
-        name = name + ".pt"
+        name = ".\\models\\" + name + ".pt"
         self.load_state_dict(torch.load(name))

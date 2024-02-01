@@ -121,7 +121,7 @@ The secondary reward, used for evaluation of the primary reward, is the pressure
 The action space is discrete, with 4 possible actions for each agent. As described in the [SUMO-RL](https://github.com/LucasAlegre/sumo-rl.git) repo:
 
 <p align="center">
-<img src="../docs/_static/actions.png" align="center" width="75%"/>
+<img src="./docs/_static/actions.png" align="center" width="75%"/>
 </p>
 
 Actions can only be updated when a minimum green time and a yellow time has passed, which agents are made aware of in the observation.

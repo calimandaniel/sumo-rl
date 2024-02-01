@@ -13,8 +13,6 @@ class RandAgent:
         self.alpha = alpha
         self.gamma = gamma
         self.action = None
-        
-
         self.exploration = exploration_strategy
         self.acc_reward = 0
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -32,8 +32,6 @@ class DQNAgent:
         else:
             self.q_network = q_net.to(self.device)
 
-        #print(state_space.shape)
-        #print("starting_state: ", len(starting_state))
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=alpha)
         self.exploration = exploration_strategy
         self.acc_reward = 0
@@ -41,13 +39,8 @@ class DQNAgent:
     def act(self):
         state_tensor = torch.tensor(self.state, dtype=torch.float32).to(self.device)
         q_values = self.q_network(state_tensor).to(self.device)
-        #print("self:state: ", self.state )
-        #print("actions: ", self.action_space)
         state_array = (np.array(self.state, dtype=int))
-        #print("State_array: ", state_array)
-        #print("Qvals: ", q_values)
         self.action = self.exploration.choose(q_values, state_array, self.action_space)
-        #print("Returning: ", self.action)
         return self.action
 
     def learn(self, next_state, reward, done=False):
@@ -55,12 +48,8 @@ class DQNAgent:
 
         q_values = self.q_network(torch.tensor(self.state, dtype=torch.float32).to(self.device))
         next_q_values = self.q_network(next_state_tensor)
-        #print("SELF.ACTION: ", self.action)
-
         target = q_values.clone()
-        #target[0][self.action] = reward + self.gamma * torch.max(next_q_values).item() * (1 - done)
         target.view(-1)[self.action] = reward + self.gamma * torch.max(next_q_values).item() * (1 - done)
-
 
         loss = nn.MSELoss()(q_values, target)
         self.optimizer.zero_grad()

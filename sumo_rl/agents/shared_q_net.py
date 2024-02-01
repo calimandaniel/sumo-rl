@@ -13,9 +13,9 @@ class SharedQNetwork(nn.Module):
         return x
     
     def save(self, name):
-        name = name + "_sharedQ.pt"
+        name = name + ".pt"
         torch.save(self.state_dict(), name)
 
     def load(self, name):
-        name = name + "_sharedQ.pt"
+        name = name + ".pt"
         self.load_state_dict(torch.load(name))

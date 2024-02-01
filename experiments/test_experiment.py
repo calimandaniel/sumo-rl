@@ -12,7 +12,6 @@ else:
     sys.exit("Please declare the environment variable 'SUMO_HOME'")
 
 from sumo_rl import SumoEnvironment
-from sumo_rl.agents import QLAgent
 from sumo_rl.agents.dqn_agent import DQNAgent
 from sumo_rl.exploration import EpsilonGreedy
 from sumo_rl.agents.shared_q_net import SharedQNetwork
@@ -25,13 +24,13 @@ if __name__ == "__main__":
     runs = 1
     episodes = 1
 
-    name = "latest_try_3_no_decay"
+    name = "latest_try_4"
 
     env = SumoEnvironment(
         net_file="./nets/2x2grid/2x2.net.xml",
         route_file="./nets/2x2grid/2x2.rou.xml",
         use_gui=False,
-        num_seconds=100000,
+        num_seconds=100,
         min_green=5,
         delta_time=5,
         reward_fn="pressure"
@@ -67,8 +66,8 @@ if __name__ == "__main__":
 
                 s, r, done, info = env.step(action=actions)
 
-                #for agent_id in s.keys():
-                #    ql_agents[agent_id].learn(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
+                for agent_id in s.keys():
+                    ql_agents[agent_id].learn(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
 
             env.save_csv(f"outputs/{name}/ql-2x2_run{run}", episode)
         shared_q_net.save(name)

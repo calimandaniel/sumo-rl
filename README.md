@@ -1,234 +1,129 @@
-<img src="docs/_static/logo.png" align="right" width="30%"/>
+# Multi-Agent Reinforcement Learning for Traffic Signal Control
+Caliman Ștefan-Daniel - 2122749
+Vilgot Astrom - 2115562
 
-[![tests](https://github.com/LucasAlegre/sumo-rl/actions/workflows/linux-test.yml/badge.svg)](https://github.com/LucasAlegre/sumo-rl/actions/workflows/linux-test.yml)
-[![PyPI version](https://badge.fury.io/py/sumo-rl.svg)](https://badge.fury.io/py/sumo-rl)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://github.com/LucasAlegre/sumo-rl/blob/main/LICENSE)
 
-# SUMO-RL
+## Overview
 
-<!-- start intro -->
+This is a multi-agent DQN solution for a traffic signal control scenario. It is implemented on top of [SUMO-RL](https://github.com/LucasAlegre/sumo-rl.git), a reinforcement learning interface for [SUMO](https://github.com/eclipse/sumo) which is a traffic simulation environment commonly used in research and industry. The implemention is based on [this paper](https://doi.org/10.48550/arXiv.2204.12190), although a lot was changed and focus shifted as the scope of this project differs. The paper is about deciding how much information to share between agents, and we decided to focus on three scenarios:
+- No communitcation - Each agent acts alone, only aware of its own existance.
+- Shared Q-network - Each agent only considers its own observations, but they all share the same Q-network and will affect each other's actions.
+- Local observation sharing - Each agent considers its own observation as well as the observations of its direct neighbors.
 
-This is a fork of the repo SUMO-RL environment (https://github.com/LucasAlegre/sumo-rl) for Traffic SIgnal Control.
+## Table of Contents
 
-For more details, check the [documentation online](https://lucasalegre.github.io/sumo-rl/).
+- [Usage](#usage)
+- [Observation Space](#observation-space)
+- [Rewards](#rewards)
+- [Metrics](#metrics)
+- [Action Space](#action-space)
+- [Training](#training)
 
-<!-- end intro -->
-
-## Install
-
-<!-- start install -->
-
-### Install SUMO latest version:
-
+## Usage
+### Installing SUMO
+Clone the SUMO repository for latest features with
 ```bash
-sudo add-apt-repository ppa:sumo/stable
-sudo apt-get update
-sudo apt-get install sumo sumo-tools sumo-doc
+git clone --recursive https://github.com/eclipse-sumo/sumo
 ```
-Don't forget to set SUMO_HOME variable (default sumo installation path is /usr/share/sumo)
-```bash
-echo 'export SUMO_HOME="/usr/share/sumo"' >> ~/.bashrc
-source ~/.bashrc
-```
-Important: for a huge performance boost (~8x) with Libsumo, you can declare the variable:
-```bash
-export LIBSUMO_AS_TRACI=1
-```
-Notice that you will not be able to run with sumo-gui or with multiple simulations in parallel if this is active ([more details](https://sumo.dlr.de/docs/Libsumo.html)).
 
-### Install SUMO-RL
+Alternitvely, it can be downloaded at [their site](https://sumo.dlr.de/docs/Downloads.html). See the [SUMO repo](https://github.com/eclipse/sumo) for more info on this.
 
-Stable release version is available through pip
+### Installing SUMO-RL
+Simple installiation with pip:
 ```bash
 pip install sumo-rl
 ```
 
-Alternatively, you can install using the latest (unreleased) version
+### Running our trained models
+Our trained models can be found in the models folder. To run a model and watch it perform, you can use the file load_and_gui.py with the model name as the -n argument. For example, to run the shared Q-network model using the queue reward function, simply run:
 ```bash
-git clone https://github.com/LucasAlegre/sumo-rl
-cd sumo-rl
-pip install -e .
+python .\experiments\load_and_gui.py -n .\models\good_queue_reward_big_sharedQ
 ```
+It is also possible to run an evaluation loop for plotting results:
+```bash
+python .\experiments\evaluate.py -n "good_queue_reward_big_sharedQ"
+```
+This will create a csv file with information about the environment at every 5th step, which can be used for plotting. It can be found in a folder "good_queue_reward_big_sharedQ" inside an eval folder in the output folder.
 
-<!-- end install -->
-
-## MDP - Observations, Actions and Rewards
-
-### Observation
-
-<!-- start observation -->
-
-The default observation for each traffic signal agent is a vector:
+To visualize results, the file plot.py can be used:
+```bash
+python .\outputs\plot.py -f .\outputs\evals\good_queue_reward_big_sharedQ\
+```
+Use the argument -func for different metrics:
 ```python
-    obs = [phase_one_hot, min_green, lane_1_density,...,lane_n_density, lane_1_queue,...,lane_n_queue]
+Metric to plot:
+1: waiting time,
+2: number of vehicles,
+3: number of stopped vehicles vs total number of vehicles,
+4: Mean speed,
+5: agents total accumulated waiting time,
+6: Mean Speed / Number of Cars,
+7: Mean Waiting Time.
 ```
-- ```phase_one_hot``` is a one-hot encoded vector indicating the current active green phase
-- ```min_green``` is a binary variable indicating whether min_green seconds have already passed in the current phase
-- ```lane_i_density``` is the number of vehicles in incoming lane i dividided by the total capacity of the lane
-- ```lane_i_queue```is the number of queued (speed below 0.1 m/s) vehicles in incoming lane i divided by the total capacity of the lane
 
-You can define your own observation by implementing a class that inherits from [ObservationFunction](https://github.com/LucasAlegre/sumo-rl/blob/main/sumo_rl/environment/observations.py) and passing it to the environment constructor.
+### Training new model
+New models are trained with the test_experiment.py file. 
+At the top of the file, the following hyper-parameters can be set:
+```python
+alpha = 0.01
+gamma = 0.99
+decay = 0.9999
+runs = 2
+episodes = 2
 
-<!-- end observation -->
+name = "good_queue_reward_big_sharedQ"
+```
 
-### Action
+When initializing a new SumoEnvironment, the following hyper.parameters can be set:
+```python
+net_file="nets/2x2grid/2x2.net.xml",
+route_file="nets/2x2grid/2x2.rou.xml",
+use_gui=False,
+num_seconds=50000,
+min_green=5,
+delta_time=5,
+reward_fn="queue"
+```
 
-<!-- start action -->
+The exact values used here are example values we used when training the good_queue_reward_big_sharedQ.pt model. 
 
-The action space is discrete.
-Every 'delta_time' seconds, each traffic signal agent can choose the next green phase configuration.
+### Local Observation Sharing
+When implementing local observation sharing, changes had to be made to dependent files. So, to train a model using communication of observations between neighbors, use the postfix _com when running files. For example:
+```bash
+python .\experiments\test_experiment_com.py
+```
 
-E.g.: In the [2-way single intersection](https://github.com/LucasAlegre/sumo-rl/blob/main/experiments/dqn_2way-single-intersection.py) there are |A| = 4 discrete actions, corresponding to the following green phase configurations:
+
+## Observation Space
+
+At every time step, each agent can observe its current action (phase), whether changing action is possible, density of the incoming lanes, and queue in the incoming lanes. 
+
+Density is defined as the number of vahicles in a lane divided by the maximum possible number of vehicles in that lane.
+
+Queue is defined as the number of halting vehicles in a lane divided by the maximum possible number of vehicles in that lane.
+
+### Observation Sharing
+For the tests using local observation sharing, neighboring agents share their full observations with eachother. This means that if an agent has, for example, two neighbors, it will consider a state of the size three times its own observation space.
+
+## Rewards
+
+The primary reward used is the queue reward, which is defined as the number of halting veichles in every lane connected to the intersection, multiplied by -1. We used this as the primary reward function because it is what is used in the [paper](https://doi.org/10.48550/arXiv.2204.12190). 
+
+<img src="https://latex.codecogs.com/svg.image?\bg{white}&space;r=-\sum_{i=1}^{n}H_i&space;" title=" r=-\sum_{i=1}^{n}H_i " />
+
+
+The secondary reward, used for evaluation of the primary reward, is the pressure reward, which is defined as the number of vehicles on outgoing lanes subtracted by the number of vehicles on incoming lanes.
+
+<img src="https://latex.codecogs.com/svg.image?\bg{white}&space;r=\sum_{i=1}^{n}V_i-\sum_{j=1}^{m}V_j&space;" title=" r=\sum_{i=1}^{n}V_i-\sum_{j=1}^{m}V_j " />
+
+
+## Action Space
+The action space is discrete, with 4 possible actions for each agent. As described in the [SUMO-RL](https://github.com/LucasAlegre/sumo-rl.git) repo:
 
 <p align="center">
-<img src="docs/_static/actions.png" align="center" width="75%"/>
+<img src="../docs/_static/actions.png" align="center" width="75%"/>
 </p>
 
-Important: every time a phase change occurs, the next phase is preeceded by a yellow phase lasting ```yellow_time``` seconds.
+Actions can only be updated when a minimum green time and a yellow time has passed, which agents are made aware of in the observation.
 
-<!-- end action -->
 
-### Rewards
-
-<!-- start reward -->
-
-The default reward function is the change in cumulative vehicle delay:
-
-<p align="center">
-<img src="docs/_static/reward.png" align="center" width="25%"/>
-</p>
-
-That is, the reward is how much the total delay (sum of the waiting times of all approaching vehicles) changed in relation to the previous time-step.
-
-You can choose a different reward function (see the ones implemented in [TrafficSignal](https://github.com/LucasAlegre/sumo-rl/blob/main/sumo_rl/environment/traffic_signal.py)) with the parameter `reward_fn` in the [SumoEnvironment](https://github.com/LucasAlegre/sumo-rl/blob/main/sumo_rl/environment/env.py) constructor.
-
-It is also possible to implement your own reward function:
-
-```python
-def my_reward_fn(traffic_signal):
-    return traffic_signal.get_average_speed()
-
-env = SumoEnvironment(..., reward_fn=my_reward_fn)
-```
-
-<!-- end reward -->
-
-## API's (Gymnasium and PettingZoo)
-
-### Gymnasium Single-Agent API
-
-<!-- start gymnasium -->
-
-If your network only has ONE traffic light, then you can instantiate a standard Gymnasium env (see [Gymnasium API](https://gymnasium.farama.org/api/env/)):
-```python
-import gymnasium as gym
-import sumo_rl
-env = gym.make('sumo-rl-v0',
-                net_file='path_to_your_network.net.xml',
-                route_file='path_to_your_routefile.rou.xml',
-                out_csv_name='path_to_output.csv',
-                use_gui=True,
-                num_seconds=100000)
-obs, info = env.reset()
-done = False
-while not done:
-    next_obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
-    done = terminated or truncated
-```
-
-<!-- end gymnasium -->
-
-### PettingZoo Multi-Agent API
-
-<!-- start pettingzoo -->
-
-For multi-agent environments, you can use the PettingZoo API (see [Petting Zoo API](https://pettingzoo.farama.org/api/parallel/)):
-
-```python
-import sumo_rl
-env = sumo_rl.parallel_env(net_file='nets/RESCO/grid4x4/grid4x4.net.xml',
-                  route_file='nets/RESCO/grid4x4/grid4x4_1.rou.xml',
-                  use_gui=True,
-                  num_seconds=3600)
-observations = env.reset()
-while env.agents:
-    actions = {agent: env.action_space(agent).sample() for agent in env.agents}  # this is where you would insert your policy
-    observations, rewards, terminations, truncations, infos = env.step(actions)
-```
-
-<!-- end pettingzoo -->
-
-### RESCO Benchmarks
-
-In the folder [nets/RESCO](https://github.com/LucasAlegre/sumo-rl/tree/main/nets/RESCO) you can find the network and route files from [RESCO](https://github.com/jault/RESCO) (Reinforcement Learning Benchmarks for Traffic Signal Control), which was built on top of SUMO-RL. See their [paper](https://people.engr.tamu.edu/guni/Papers/NeurIPS-signals.pdf) for results.
-
-<p align="center">
-<img src="nets/RESCO/maps.png" align="center" width="60%"/>
-</p>
-
-### Experiments
-
-Check [experiments](https://github.com/LucasAlegre/sumo-rl/tree/main/experiments) for examples on how to instantiate an environment and train your RL agent.
-
-### [Q-learning](https://github.com/LucasAlegre/sumo-rl/blob/main/agents/ql_agent.py) in a one-way single intersection:
-```bash
-python experiments/ql_single-intersection.py
-```
-
-### [RLlib PPO](https://docs.ray.io/en/latest/_modules/ray/rllib/algorithms/ppo/ppo.html) multiagent in a 4x4 grid:
-```bash
-python experiments/ppo_4x4grid.py
-```
-
-### [stable-baselines3 DQN](https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/dqn/dqn.py) in a 2-way single intersection:
-Obs: you need to install stable-baselines3 with ```pip install "stable_baselines3[extra]>=2.0.0a9"``` for [Gymnasium compatibility](https://stable-baselines3.readthedocs.io/en/master/guide/install.html).
-```bash
-python experiments/dqn_2way-single-intersection.py
-```
-
-### Plotting results:
-```bash
-python outputs/plot.py -f outputs/4x4grid/ppo_conn0_ep2
-```
-<p align="center">
-<img src="outputs/result.png" align="center" width="50%"/>
-</p>
-
-## Citing
-
-<!-- start citation -->
-
-If you use this repository in your research, please cite:
-```bibtex
-@misc{sumorl,
-    author = {Lucas N. Alegre},
-    title = {{SUMO-RL}},
-    year = {2019},
-    publisher = {GitHub},
-    journal = {GitHub repository},
-    howpublished = {\url{https://github.com/LucasAlegre/sumo-rl}},
-}
-```
-
-<!-- end citation -->
-
-<!-- start list of publications -->
-
-List of publications that use SUMO-RL (please open a pull request to add missing entries):
-- [Quantifying the impact of non-stationarity in reinforcement learning-based traffic signal control (Alegre et al., 2021)](https://peerj.com/articles/cs-575/)
-- [Information-Theoretic State Space Model for Multi-View Reinforcement Learning (Hwang et al., 2023)](https://openreview.net/forum?id=jwy77xkyPt)
-- [A citywide TD-learning based intelligent traffic signal control for autonomous vehicles: Performance evaluation using SUMO (Reza et al., 2023)](https://onlinelibrary.wiley.com/doi/full/10.1111/exsy.13301)
-- [Handling uncertainty in self-adaptive systems: an ontology-based reinforcement learning model (Ghanadbashi et al., 2023)](https://link.springer.com/article/10.1007/s40860-022-00198-x)
-- [Multiagent Reinforcement Learning for Traffic Signal Control: a k-Nearest Neighbors Based Approach (Almeida et al., 2022)](https://ceur-ws.org/Vol-3173/3.pdf)
-- [From Local to Global: A Curriculum Learning Approach for Reinforcement Learning-based Traffic Signal Control (Zheng et al., 2022)](https://ieeexplore.ieee.org/abstract/document/9832372)
-- [Poster: Reliable On-Ramp Merging via Multimodal Reinforcement Learning (Bagwe et al., 2022)](https://ieeexplore.ieee.org/abstract/document/9996639)
-- [Using ontology to guide reinforcement learning agents in unseen situations (Ghanadbashi & Golpayegani, 2022)](https://link.springer.com/article/10.1007/s10489-021-02449-5)
-- [Information upwards, recommendation downwards: reinforcement learning with hierarchy for traffic signal control (Antes et al., 2022)](https://www.sciencedirect.com/science/article/pii/S1877050922004185)
-- [A Comparative Study of Algorithms for Intelligent Traffic Signal Control (Chaudhuri et al., 2022)](https://link.springer.com/chapter/10.1007/978-981-16-7996-4_19)
-- [An Ontology-Based Intelligent Traffic Signal Control Model (Ghanadbashi & Golpayegani, 2021)](https://ieeexplore.ieee.org/abstract/document/9564962)
-- [Reinforcement Learning Benchmarks for Traffic Signal Control (Ault & Sharon, 2021)](https://openreview.net/forum?id=LqRSh6V0vR)
-- [EcoLight: Reward Shaping in Deep Reinforcement Learning for Ergonomic Traffic Signal Control (Agand et al., 2021)](https://s3.us-east-1.amazonaws.com/climate-change-ai/papers/neurips2021/43/paper.pdf)
-
-<!-- end list of publications -->

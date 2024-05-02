@@ -1,7 +1,5 @@
 # Multi-Agent Reinforcement Learning for Traffic Signal Control
-Caliman Ștefan-Daniel - 2122749
-Vilgot Astrom - 2115562
-
+Caliman Ștefan-Daniel
 
 ## Overview
 
@@ -15,9 +13,7 @@ This is a multi-agent DQN solution for a traffic signal control scenario. It is 
 - [Usage](#usage)
 - [Observation Space](#observation-space)
 - [Rewards](#rewards)
-- [Metrics](#metrics)
 - [Action Space](#action-space)
-- [Training](#training)
 
 ## Usage
 ### Installing SUMO
@@ -35,19 +31,19 @@ pip install sumo-rl
 ```
 
 ### Running our trained models
-Our trained models can be found in the models folder. To run a model and watch it perform, you can use the file load_and_gui.py with the model name as the -n argument. For example, to run the shared Q-network model using the queue reward function, simply run:
+Our trained models can be found in the models folder. To run a model and watch it perform, you can use the file dqn_gui_local.py with the model name as the -n argument. For example, to run the shared Q-network model using the queue reward function, simply run:
 ```bash
-python .\experiments\load_and_gui.py -n .\models\good_queue_reward_big_sharedQ
+python .\experiments\dqn_gui_local.py -n .\models\dqn_2x2_pressure
 ```
 It is also possible to run an evaluation loop for plotting results:
 ```bash
-python .\experiments\evaluate.py -n "good_queue_reward_big_sharedQ"
+python .\experiments\evaluate.py -n "dqn_2x2_pressure"
 ```
 This will create a csv file with information about the environment at every 5th step, which can be used for plotting. It can be found in a folder "good_queue_reward_big_sharedQ" inside an eval folder in the output folder.
 
 To visualize results, the file plot.py can be used:
 ```bash
-python .\outputs\plot.py -f .\outputs\evals\good_queue_reward_big_sharedQ\
+python .\outputs\plot.py -f .\outputs\evals\dqn_2x2_pressure\
 ```
 Use the argument -func for different metrics:
 ```python
@@ -62,7 +58,7 @@ Metric to plot:
 ```
 
 ### Training new model
-New models are trained with the test_experiment.py file. 
+New models are trained with the train_dqn.py file. 
 At the top of the file, the following hyper-parameters can be set:
 ```python
 alpha = 0.01
@@ -71,7 +67,7 @@ decay = 0.9999
 runs = 2
 episodes = 2
 
-name = "good_queue_reward_big_sharedQ"
+name = "dqn_2x2_pressure"
 ```
 
 When initializing a new SumoEnvironment, the following hyper.parameters can be set:

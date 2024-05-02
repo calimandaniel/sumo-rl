@@ -236,6 +236,8 @@ class SumoEnvironment(gym.Env):
             self.sumo = traci.getConnection(self.label)
 
         if self.use_gui or self.render_mode is not None:
+            if "DEFAULT_VIEW" not in dir(traci.gui):  # traci.gui.DEFAULT_VIEW is not defined in libsumo
+                traci.gui.DEFAULT_VIEW = "View #0"
             self.sumo.gui.setSchema(traci.gui.DEFAULT_VIEW, "real world")
 
     def reset(self, seed: Optional[int] = None, **kwargs):
@@ -303,7 +305,7 @@ class SumoEnvironment(gym.Env):
             If single_agent is True, action is an int, otherwise it expects a dict with keys corresponding to traffic signal ids.
         """
         # No action, follow fixed TL defined in self.phases
-        if action is None or action == {}:
+        if self.fixed_ts or action is None or action == {}:
             for _ in range(self.delta_time):
                 self._sumo_step()
         else:
@@ -362,15 +364,27 @@ class SumoEnvironment(gym.Env):
 
     def _compute_observations(self):
         self.observations.update(
-            {ts: self.traffic_signals[ts].compute_observation() for ts in self.ts_ids if self.traffic_signals[ts].time_to_act}
+            {
+                ts: self.traffic_signals[ts].compute_observation()
+                for ts in self.ts_ids
+                if self.traffic_signals[ts].time_to_act or self.fixed_ts
+            }
         )
-        return {ts: self.observations[ts].copy() for ts in self.observations.keys() if self.traffic_signals[ts].time_to_act}
+        return {
+            ts: self.observations[ts].copy()
+            for ts in self.observations.keys()
+            if self.traffic_signals[ts].time_to_act or self.fixed_ts
+        }
 
     def _compute_rewards(self):
         self.rewards.update(
-            {ts: self.traffic_signals[ts].compute_reward() for ts in self.ts_ids if self.traffic_signals[ts].time_to_act}
+            {
+                ts: self.traffic_signals[ts].compute_reward()
+                for ts in self.ts_ids
+                if self.traffic_signals[ts].time_to_act or self.fixed_ts
+            }
         )
-        return {ts: self.rewards[ts] for ts in self.rewards.keys() if self.traffic_signals[ts].time_to_act}
+        return {ts: self.rewards[ts] for ts in self.rewards.keys() if self.traffic_signals[ts].time_to_act or self.fixed_ts}
 
     @property
     def observation_space(self):
@@ -579,10 +593,16 @@ class SumoEnvironmentPZ(AECEnv, EzPickle):
                 "It is currently {}".format(agent, self.action_spaces[agent].n, action)
             )
 
-        self.env._apply_actions({agent: action})
+        if not self.env.fixed_ts:
+            self.env._apply_actions({agent: action})
 
         if self._agent_selector.is_last():
-            self.env._run_steps()
+            if not self.env.fixed_ts:
+                self.env._run_steps()
+            else:
+                for _ in range(self.env.delta_time):
+                    self.env._sumo_step()
+
             self.env._compute_observations()
             self.rewards = self.env._compute_rewards()
             self.compute_info()

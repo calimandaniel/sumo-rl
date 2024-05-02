@@ -64,5 +64,10 @@ class DQNAgent:
         self.state = next_state
         self.acc_reward += reward
 
+    def save(self, name):
+        name = ".\\models\\" + name + "_agent_" + str(self.id)
+        torch.save(self.q_network.state_dict(), name + ".pt")
 
-    
+    def load(self, name):
+        name = ".\\models\\" + name + "_agent_" + str(self.id) + ".pt"
+        self.q_network.load_state_dict(torch.load(name))

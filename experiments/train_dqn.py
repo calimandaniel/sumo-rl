@@ -24,13 +24,13 @@ if __name__ == "__main__":
     runs = 1
     episodes = 1
 
-    name = "latest_try_4"
+    name = "dqn_2x2_pressure"
 
     env = SumoEnvironment(
         net_file="./nets/2x2grid/2x2.net.xml",
         route_file="./nets/2x2grid/2x2.rou.xml",
         use_gui=False,
-        num_seconds=100,
+        num_seconds=1000,
         min_green=5,
         delta_time=5,
         reward_fn="pressure"

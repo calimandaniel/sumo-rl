@@ -40,7 +40,7 @@ class DQNAgent:
         state_tensor = torch.tensor(self.state, dtype=torch.float32).to(self.device)
         q_values = self.q_network(state_tensor).to(self.device)
         state_array = (np.array(self.state, dtype=int))
-        self.action = self.exploration.choose(q_values, state_array, self.action_space)
+        self.action = self.exploration.choose_nn(q_values, self.action_space)
         return self.action
 
     def learn(self, next_state, reward, done=False):

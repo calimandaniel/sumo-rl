@@ -12,8 +12,7 @@ else:
     sys.exit("Please declare the environment variable 'SUMO_HOME'")
 
 from sumo_rl import SumoEnvironment
-from sumo_rl.agents.shared_q_net import SharedQNetwork
-from sumo_rl.agents.dqn_agent import DQNAgent
+from sumo_rl.agents.qlearning_agent import QLAgent
 from sumo_rl.exploration import EpsilonGreedy
 
 
@@ -23,7 +22,7 @@ if __name__ == "__main__":
     )
     prs.add_argument("-s", type=int, default=1000, help="nr of simulated seconds\n")
     prs.add_argument("-g", type=int, default=5, help="Minimum green time\n")
-    prs.add_argument("-n", required=True, type=str, help="Name of saved model")
+    prs.add_argument("-n", default="", type=str, help="Name of saved model")
 
     args = prs.parse_args()
 
@@ -38,27 +37,24 @@ if __name__ == "__main__":
     env = SumoEnvironment(
         net_file="nets/2x2grid/2x2.net.xml",
         route_file="nets/2x2grid/2x2.rou.xml",
-        use_gui=False,
+        use_gui=True,
         num_seconds=args.s,
         min_green=args.g,
         delta_time=5,
     )
     initial_states = env.reset()
-    shared_q_net = SharedQNetwork(18, env.action_space.n)
-    shared_q_net.load(args.n)
     ql_agents = {
-        ts: DQNAgent(
-            id=ts,
+        ts: QLAgent(
             starting_state=env.encode(initial_states[ts], ts),
             state_space=env.observation_space,
             action_space=env.action_space,
-            q_net=shared_q_net,
             alpha=alpha,
             gamma=gamma,
             exploration_strategy=EpsilonGreedy(initial_epsilon=0.05, min_epsilon=0.05, decay=decay),
         ) 
         for ts in env.ts_ids
     }
+    QLAgent.load_all(ql_agents, args.n)
     initial_states = env.reset()
     for ts in initial_states.keys():
         ql_agents[ts].state = env.encode(initial_states[ts], ts)
@@ -71,9 +67,7 @@ if __name__ == "__main__":
 
         for agent_id in s.keys():
             ql_agents[agent_id].eval_step(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
-        #     ql_agents[agent_id].learn(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
-
-    env.save_csv(f"outputs/evals/{args.n}/file", 1)
+            #ql_agents[agent_id].learn(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
     
 
     env.close()

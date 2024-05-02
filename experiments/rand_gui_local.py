@@ -13,7 +13,7 @@ else:
 
 from sumo_rl import SumoEnvironment
 from sumo_rl.agents.shared_q_net import SharedQNetwork
-from sumo_rl.agents.dqn_agent import DQNAgent
+from sumo_rl.agents.rand_agent import RandAgent
 from sumo_rl.exploration import EpsilonGreedy
 
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     )
     prs.add_argument("-s", type=int, default=1000, help="nr of simulated seconds\n")
     prs.add_argument("-g", type=int, default=5, help="Minimum green time\n")
-    prs.add_argument("-n", required=True, type=str, help="Name of saved model")
+    prs.add_argument("-n", default="", type=str, help="Name of saved model")
 
     args = prs.parse_args()
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     env = SumoEnvironment(
         net_file="nets/2x2grid/2x2.net.xml",
         route_file="nets/2x2grid/2x2.rou.xml",
-        use_gui=False,
+        use_gui=True,
         num_seconds=args.s,
         min_green=args.g,
         delta_time=5,
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     shared_q_net = SharedQNetwork(18, env.action_space.n)
     shared_q_net.load(args.n)
     ql_agents = {
-        ts: DQNAgent(
+        ts: RandAgent(
             id=ts,
             starting_state=env.encode(initial_states[ts], ts),
             state_space=env.observation_space,
@@ -71,9 +71,7 @@ if __name__ == "__main__":
 
         for agent_id in s.keys():
             ql_agents[agent_id].eval_step(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
-        #     ql_agents[agent_id].learn(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
-
-    env.save_csv(f"outputs/evals/{args.n}/file", 1)
+            #ql_agents[agent_id].learn(next_state=env.encode(s[agent_id], agent_id), reward=r[agent_id])
     
 
     env.close()

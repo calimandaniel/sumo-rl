@@ -1,7 +1,7 @@
 import argparse
 import os
 import sys
-
+import matplotlib.pyplot as plt
 import pandas as pd
 
 
@@ -16,6 +16,7 @@ from sumo_rl.agents.rand_agent import RandAgent
 from sumo_rl.exploration import EpsilonGreedy
 from sumo_rl.agents.shared_q_net import SharedQNetwork
 
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 if __name__ == "__main__":
     alpha = 0.01
@@ -30,7 +31,7 @@ if __name__ == "__main__":
         net_file="./nets/2x2grid/2x2.net.xml",
         route_file="./nets/2x2grid/2x2.rou.xml",
         use_gui=False,
-        num_seconds=1000,
+        num_seconds=100000,
         min_green=5,
         delta_time=5,
         reward_fn="pressure"
@@ -72,4 +73,15 @@ if __name__ == "__main__":
             env.save_csv(f"outputs/{name}/ql-2x2_run{run}", episode)
         shared_q_net.save(name)
 
+    for agent_id, agent in ql_agents.items():
+        plt.plot(agent.rewards, label=f'Agent {agent_id}')
+    
+    plt.xlabel('Step')
+    plt.ylabel('Reward')
+    plt.title('Reward over time')
+    plt.legend()
+    # Save the plot before showing it
+    plt.savefig('reward_rand.png')
+    plt.show()
+    
     env.close()

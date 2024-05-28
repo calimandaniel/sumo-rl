@@ -35,7 +35,8 @@ class DQNAgent:
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=alpha)
         self.exploration = exploration_strategy
         self.acc_reward = 0
-
+        self.rewards = []
+        
     def act(self):
         state_tensor = torch.tensor(self.state, dtype=torch.float32).to(self.device)
         q_values = self.q_network(state_tensor).to(self.device)
@@ -58,6 +59,8 @@ class DQNAgent:
 
         self.state = next_state
         self.acc_reward += reward
+        self.rewards.append(reward)
+        
     
     def eval_step(self, next_state, reward):
         

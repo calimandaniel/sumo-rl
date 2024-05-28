@@ -16,13 +16,16 @@ class RandAgent:
         self.exploration = exploration_strategy
         self.acc_reward = 0
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+        self.rewards = []
+        
     def act(self):
         
         self.action = int(self.action_space.sample())
         return self.action
 
     def learn(self, next_state, reward, done=False):
+        #self.acc_reward += reward
+        self.rewards.append(reward)
         return
     
     def eval_step(self, next_state, reward):

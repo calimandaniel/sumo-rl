@@ -1,7 +1,7 @@
 import argparse
 import os
 import sys
-
+import matplotlib.pyplot as plt
 import pandas as pd
 
 
@@ -15,6 +15,7 @@ from sumo_rl import SumoEnvironment
 from sumo_rl.agents.qlearning_agent import QLAgent
 from sumo_rl.exploration import EpsilonGreedy
 
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 if __name__ == "__main__":
     alpha = 0.01
@@ -67,4 +68,15 @@ if __name__ == "__main__":
 
             env.save_csv(f"outputs/{name}/ql-2x2_run{run}", episode)
         QLAgent.save_all(ql_agents, name)
+            # Assuming 'ql_agents' is your dictionary of agents
+    for agent_id, agent in ql_agents.items():
+        plt.plot(agent.rewards, label=f'Agent {agent_id}')
+    plt.xlabel('Step')
+    plt.ylabel('Reward')
+    plt.title('Reward over time')
+    plt.legend()
+    # Save the plot before showing it
+    plt.savefig('reward_qlearning.png')
+    plt.show()
+    
     env.close()

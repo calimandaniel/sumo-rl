@@ -16,6 +16,7 @@ class QLAgent:
         self.q_table = {self.state: [0 for _ in range(action_space.n)]}
         self.exploration = exploration_strategy
         self.acc_reward = 0
+        self.rewards = []
 
     def act(self):
         """Choose action based on Q-table."""
@@ -35,6 +36,7 @@ class QLAgent:
         )
         self.state = s1
         self.acc_reward += reward
+        self.rewards.append(reward)
         
     def eval_step(self, next_state, reward):
         self.state = next_state

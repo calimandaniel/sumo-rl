@@ -20,7 +20,7 @@ if __name__ == "__main__":
     prs = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="""Show trained junction"""
     )
-    prs.add_argument("-s", type=int, default=1000, help="nr of simulated seconds\n")
+    prs.add_argument("-s", type=int, default=100000, help="nr of simulated seconds\n")
     prs.add_argument("-g", type=int, default=5, help="Minimum green time\n")
     prs.add_argument("-n", required=True, type=str, help="Name of saved model")
 

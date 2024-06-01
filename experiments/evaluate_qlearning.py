@@ -20,7 +20,7 @@ if __name__ == "__main__":
     prs = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="""Show trained junction"""
     )
-    prs.add_argument("-s", type=int, default=1000, help="nr of simulated seconds\n")
+    prs.add_argument("-s", type=int, default=100000, help="nr of simulated seconds\n")
     prs.add_argument("-g", type=int, default=5, help="Minimum green time\n")
     prs.add_argument("-n", required=True, type=str, help="Name of saved model")
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         net_file="nets/2x2grid/2x2.net.xml",
         route_file="nets/2x2grid/2x2.rou.xml",
         use_gui=False,
-        num_seconds=args.s,
+        num_seconds=100000,
         min_green=args.g,
         delta_time=5,
     )

@@ -15,12 +15,12 @@ from sumo_rl import SumoEnvironment
 from sumo_rl.agents.qlearning_agent import QLAgent
 from sumo_rl.exploration import EpsilonGreedy
 
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+#os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 if __name__ == "__main__":
-    alpha = 0.01
-    gamma = 0.99
-    decay = 0.9999
+    alpha = 0.001
+    gamma = 0.5
+    decay = 0.999
     runs = 1
     episodes = 1
 
@@ -30,10 +30,10 @@ if __name__ == "__main__":
         net_file="./nets/2x2grid/2x2.net.xml",
         route_file="./nets/2x2grid/2x2.rou.xml",
         use_gui=False,
-        num_seconds=100000,
+        num_seconds=500000,
         min_green=5,
         delta_time=5,
-        reward_fn="pressure"
+        reward_fn="diff-waiting-time"
     )
 
     for run in range(1, runs + 1):

@@ -5,22 +5,18 @@ import numpy as np
 from sumo_rl.exploration.epsilon_greedy import EpsilonGreedy
 
 class QNetwork(nn.Module):
-    def __init__(self, input_size, output_size, hidden_layers = [1, 2, 3, 4, 5], neurons = [64, 128, 256, 512]):
+    def __init__(self, input_size, output_size):
         super(QNetwork, self).__init__()
-        self.layers = nn.ModuleList()
-        self.layers.append(nn.Linear(input_size, neurons))
-        for _ in range(hidden_layers - 1):
-            self.layers.append(nn.Linear(neurons, neurons))
-        self.layers.append(nn.Linear(neurons, output_size))
+        self.fc = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, output_size)
 
     def forward(self, x):
-        for layer in self.layers[:-1]:
-            x = torch.relu(layer(x))
-        x = self.layers[-1](x)
+        x = torch.relu(self.fc(x))
+        x = self.fc2(x)
         return x
 
 
-class DQNAgent:
+class DoubleDQNAgent:
     def __init__(self, id, starting_state, state_space, action_space, q_net=None, alpha=0.001, gamma=0.95, exploration_strategy=EpsilonGreedy()):
         self.id = id
         self.state = starting_state
@@ -35,13 +31,16 @@ class DQNAgent:
             self.q_network = QNetwork(len(starting_state), action_space.n).to(self.device)
         else:
             self.q_network = q_net.to(self.device)
+        
+        self.target_q_network = QNetwork(len(starting_state), action_space.n).to(self.device)
+        self.target_q_network.load_state_dict(self.q_network.state_dict())
+        self.target_q_network.eval()
 
-        self.optimizer = optim.Adam(self.q_network.parameters(), lr=self.alpha)
+        self.optimizer = optim.Adam(self.q_network.parameters(), lr=alpha)
         self.exploration = exploration_strategy
         self.acc_reward = 0
         self.rewards = []
-        
-        
+
     def act(self):
         state_tensor = torch.tensor(self.state, dtype=torch.float32).to(self.device)
         q_values = self.q_network(state_tensor).to(self.device)
@@ -54,8 +53,11 @@ class DQNAgent:
 
         q_values = self.q_network(torch.tensor(self.state, dtype=torch.float32).to(self.device))
         next_q_values = self.q_network(next_state_tensor)
+        next_q_state_values = self.target_q_network(next_state_tensor)
+
+        next_action = torch.argmax(next_q_values).item()
         target = q_values.clone()
-        target.view(-1)[self.action] = reward + self.gamma * torch.max(next_q_values).item() * (1 - done)
+        target.view(-1)[self.action] = reward + self.gamma * next_q_state_values[next_action].item() * (1 - done)
 
         loss = nn.MSELoss()(q_values, target)
         self.optimizer.zero_grad()
@@ -64,11 +66,12 @@ class DQNAgent:
 
         self.state = next_state
         self.acc_reward += reward
-        self.rewards.append(self.acc_reward)
-        
+        self.rewards.append(reward)
+
+    def update_target_network(self):
+        self.target_q_network.load_state_dict(self.q_network.state_dict())
     
     def eval_step(self, next_state, reward):
-        
         self.state = next_state
         self.acc_reward += reward
 
@@ -79,3 +82,4 @@ class DQNAgent:
     def load(self, name):
         name = ".\\models\\" + name + "_agent_" + str(self.id) + ".pt"
         self.q_network.load_state_dict(torch.load(name))
+        self.update_target_network()  # Make sure target network is updated after loading

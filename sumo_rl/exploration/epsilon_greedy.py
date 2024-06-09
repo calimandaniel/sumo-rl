@@ -20,15 +20,26 @@ class EpsilonGreedy:
             action = torch.argmax(q_table).item()
 
         self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
-        # print(self.epsilon)
+        #print(self.epsilon)
         return action
     
-    def choose(self, q_table, state, action_space):
+    def choose_q_table(self, q_table, state, action_space):
         """Choose action based on epsilon greedy strategy."""
-        if np.random.rand() < self.epsilon or state not in q_table:
+        if np.random.rand() < self.epsilon:
             action = int(action_space.sample())
         else:
             action = np.argmax(q_table[state])
+
+        self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
+        # print(self.epsilon)
+        return action
+    
+    def choose(self, q_table, action_space):
+        """Choose action based on epsilon greedy strategy."""
+        if np.random.rand() < self.epsilon:
+            action = np.random.randint(action_space)  # Choose a random action
+        else:
+            action = np.argmax(q_table)
 
         self.epsilon = max(self.epsilon * self.decay, self.min_epsilon)
         return action

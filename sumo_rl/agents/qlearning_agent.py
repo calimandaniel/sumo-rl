@@ -1,6 +1,8 @@
 """Q-learning Agent class."""
 from sumo_rl.exploration.epsilon_greedy import EpsilonGreedy
 import pickle
+import numpy as np 
+
 
 class QLAgent:
     """Q-learning Agent class."""
@@ -13,14 +15,18 @@ class QLAgent:
         self.action = None
         self.alpha = alpha
         self.gamma = gamma
-        self.q_table = {self.state: [0 for _ in range(action_space.n)]}
+        #self.q_table = {}
         self.exploration = exploration_strategy
         self.acc_reward = 0
         self.rewards = []
+            # Initialize Q-table with zeros for all state-action pairs
+        self.q_table = {self.state: [0 for _ in range(action_space.n)]}
+
 
     def act(self):
         """Choose action based on Q-table."""
-        self.action = self.exploration.choose(self.q_table, self.state, self.action_space)
+        self.action = self.exploration.choose_q_table(self.q_table, self.state, self.action_space)
+        #print("action", self.action)
         return self.action
 
     def learn(self, next_state, reward, done=False):
@@ -34,9 +40,11 @@ class QLAgent:
         self.q_table[s][a] = self.q_table[s][a] + self.alpha * (
             reward + self.gamma * max(self.q_table[s1]) - self.q_table[s][a]
         )
+        #print("Q-table", self.q_table[s][a])
         self.state = s1
         self.acc_reward += reward
         self.rewards.append(reward)
+        self.state = next_state
         
     def eval_step(self, next_state, reward):
         self.state = next_state

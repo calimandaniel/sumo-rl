@@ -9,7 +9,7 @@ rand_2x2
 
 train: python .\experiments\train_rand.py 
 Run gui: python .\experiments\rand_gui_local.py -n rand_2x2_pressure
-Eval: python .\experiments\evaluate.py -n "rand_2x2_pressure"
+Eval: python .\experiments\evaluate_rand.py -n "rand_2x2_pressure"
 Vis plot: python .\outputs\plot.py -f .\outputs\evals\rand_2x2_pressure\
 
 qlearning_2x2
@@ -25,3 +25,8 @@ train: python .\experiments\train_dqn_no_communication.py
 Run gui: python .\experiments\dqn_no_comm_gui.py -n dqn_no_comm_2x2_pressure
 Eval: python .\experiments\evaluate_dqn_no_communication.py -n "dqn_no_comm_2x2_pressure"
 Vis plot: python .\outputs\plot.py -f .\outputs\evals\dqn_no_comm_2x2_pressure\
+
+1 - waiting time
+3 - nr of stopped vehicles vs total nr of vehicles
+4 - Mean speed
+7 - Mean Waiting Time

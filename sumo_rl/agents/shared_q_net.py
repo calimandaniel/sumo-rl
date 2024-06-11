@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class SharedQNetwork(nn.Module):
-    def __init__(self, input_size, output_size, hidden_layers=2, neurons=64, use_ln=False, use_dropout=False, dropout_rate=0.2):
+    def __init__(self, input_size, output_size, hidden_layers=3, neurons=128, use_ln=False, use_dropout=False, dropout_rate=0.2):
         super(SharedQNetwork, self).__init__()
         self.layers = nn.ModuleList()
 

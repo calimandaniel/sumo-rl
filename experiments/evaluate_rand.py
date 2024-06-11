@@ -12,8 +12,7 @@ else:
     sys.exit("Please declare the environment variable 'SUMO_HOME'")
 
 from sumo_rl import SumoEnvironment
-from sumo_rl.agents.shared_q_net import SharedQNetwork
-from sumo_rl.agents.dqn_agent import DQNAgent
+from sumo_rl.agents.rand_agent import RandAgent, RandQNetwork
 from sumo_rl.exploration import EpsilonGreedy
 
 
@@ -43,11 +42,12 @@ if __name__ == "__main__":
         min_green=args.g,
         delta_time=5,
     )
-    initial_states = env.reset()
-    shared_q_net = SharedQNetwork(18, env.action_space.n)
+    shared_q_net = RandQNetwork(18, env.action_space.n)
     shared_q_net.load(args.n)
+    initial_states = env.reset()
+    
     ql_agents = {
-        ts: DQNAgent(
+        ts: RandAgent(
             id=ts,
             starting_state=env.encode(initial_states[ts], ts),
             state_space=env.observation_space,
@@ -60,6 +60,7 @@ if __name__ == "__main__":
         for ts in env.ts_ids
     }
     initial_states = env.reset()
+    
     for ts in initial_states.keys():
         ql_agents[ts].state = env.encode(initial_states[ts], ts)
     infos = []

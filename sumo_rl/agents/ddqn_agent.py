@@ -33,8 +33,8 @@ class DoubleDQNAgent:
             self.q_network = q_net.to(self.device)
         
         self.target_q_network = QNetwork(len(starting_state), action_space.n).to(self.device)
-        self.target_q_network.load_state_dict(self.q_network.state_dict())
-        self.target_q_network.eval()
+        #self.target_q_network.load_state_dict(self.q_network.state_dict())
+        #self.target_q_network.eval()
 
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=alpha)
         self.exploration = exploration_strategy

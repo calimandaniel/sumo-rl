@@ -9,21 +9,25 @@ import torch.nn as nn
 
 
 class QNetwork(nn.Module):
-    def __init__(self, input_size, output_size, hidden_layers=3, neurons=64, use_ln=False, use_dropout=False, dropout_rate=0.2):
+    def __init__(self, input_size, output_size, hidden_layers=3, neurons=128, use_ln=False, use_dropout=False, dropout_rate=0.2):
         super(QNetwork, self).__init__()
         self.layers = nn.ModuleList()
 
+        # Input layer
         self.layers.append(nn.Linear(input_size, neurons))
         if use_ln:
             self.layers.append(nn.LayerNorm(neurons))
         if use_dropout:
             self.layers.append(nn.Dropout(dropout_rate))
 
+        # Hidden layers
         for i in range(hidden_layers):
             if i < hidden_layers // 2:
+                # Increase the number of neurons in the first half of the hidden layers
                 self.layers.append(nn.Linear(neurons, neurons * 2))
                 neurons *= 2
             else:
+                # Decrease the number of neurons in the second half of the hidden layers
                 self.layers.append(nn.Linear(neurons, neurons // 2))
                 neurons //= 2
 
@@ -32,6 +36,7 @@ class QNetwork(nn.Module):
             if use_dropout:
                 self.layers.append(nn.Dropout(dropout_rate))
 
+        # Output layer
         self.layers.append(nn.Linear(neurons, output_size))
         
         
@@ -50,8 +55,8 @@ class QNetwork(nn.Module):
         self.load_state_dict(torch.load(name))
 
 
-class DQNAgent:
-    def __init__(self, id, starting_state, state_space, action_space, q_net=None, alpha=0.001, gamma=0.95, exploration_strategy=EpsilonGreedy()):
+class DQNAgentNoComm:
+    def __init__(self, id, starting_state, state_space, action_space, q_net=None, alpha=0.001, gamma=0.95, exploration_strategy=EpsilonGreedy(), hidden_layers=3, neurons=128):
         self.id = id
         self.state = starting_state
         self.state_space = state_space
@@ -62,7 +67,7 @@ class DQNAgent:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         if q_net is None:
-            self.q_network = QNetwork(len(starting_state), action_space.n).to(self.device)
+            self.q_network = QNetwork(len(starting_state), action_space.n, hidden_layers, neurons).to(self.device)
         else:
             self.q_network = q_net.to(self.device)
 

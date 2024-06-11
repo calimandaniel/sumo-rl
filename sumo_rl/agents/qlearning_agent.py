@@ -15,18 +15,17 @@ class QLAgent:
         self.action = None
         self.alpha = alpha
         self.gamma = gamma
-        #self.q_table = {}
         self.exploration = exploration_strategy
         self.acc_reward = 0
         self.rewards = []
-            # Initialize Q-table with zeros for all state-action pairs
         self.q_table = {self.state: [0 for _ in range(action_space.n)]}
 
 
     def act(self):
         """Choose action based on Q-table."""
+        if self.state not in self.q_table:
+            self.q_table[self.state] = [0 for _ in range(self.action_space.n)]
         self.action = self.exploration.choose_q_table(self.q_table, self.state, self.action_space)
-        #print("action", self.action)
         return self.action
 
     def learn(self, next_state, reward, done=False):

@@ -12,11 +12,10 @@ else:
     sys.exit("Please declare the environment variable 'SUMO_HOME'")
 
 from sumo_rl import SumoEnvironment
-from sumo_rl.agents.rand_agent import RandAgent
+from sumo_rl.agents.rand_agent import RandAgent, RandQNetwork
 from sumo_rl.exploration import EpsilonGreedy
-from sumo_rl.agents.shared_q_net import SharedQNetwork
 
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+#os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 if __name__ == "__main__":
     alpha = 0.01
@@ -31,15 +30,15 @@ if __name__ == "__main__":
         net_file="./nets/2x2grid/2x2.net.xml",
         route_file="./nets/2x2grid/2x2.rou.xml",
         use_gui=False,
-        num_seconds=100000,
+        num_seconds=10000,
         min_green=5,
         delta_time=5,
-        reward_fn="pressure"
+        reward_fn="diff-waiting-time"
     )
 
     for run in range(1, runs + 1):
         initial_states = env.reset()
-        shared_q_net = SharedQNetwork(18, env.action_space.n)
+        shared_q_net = RandQNetwork(18, env.action_space.n)
         ql_agents = {
             ts: RandAgent(
                 id=ts,

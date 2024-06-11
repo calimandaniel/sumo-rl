@@ -12,7 +12,7 @@ else:
     sys.exit("Please declare the environment variable 'SUMO_HOME'")
 
 from sumo_rl import SumoEnvironment
-from sumo_rl.agents.dqn_agent import DQNAgent
+from sumo_rl.agents.dqn_agent_no_comm import DQNAgentNoComm
 from sumo_rl.exploration import EpsilonGreedy
 
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     prs = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="""Show trained junction"""
     )
-    prs.add_argument("-s", type=int, default=100000, help="nr of simulated seconds\n")
+    prs.add_argument("-s", type=int, default=1000, help="nr of simulated seconds\n")
     prs.add_argument("-g", type=int, default=5, help="Minimum green time\n")
     prs.add_argument("-n", default="", type=str, help="Name of saved model")
 
@@ -42,9 +42,16 @@ if __name__ == "__main__":
         min_green=args.g,
         delta_time=5,
     )
+    
+    gamma = 0.5
+    #decay_values = [0.999, 0.99, 0.9]
+
+    hidden_layers = 1
+    neurons = 64
+    
     initial_states = env.reset()
     ql_agents = {
-        ts: DQNAgent(
+        ts: DQNAgentNoComm(
             id=ts,
             starting_state=env.encode(initial_states[ts], ts),
             state_space=env.observation_space,
@@ -52,6 +59,8 @@ if __name__ == "__main__":
             alpha=alpha,
             gamma=gamma,
             exploration_strategy=EpsilonGreedy(initial_epsilon=0.05, min_epsilon=0.05, decay=decay),
+            hidden_layers = hidden_layers,
+            neurons = neurons
         ) 
         for ts in env.ts_ids
     }

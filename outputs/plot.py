@@ -52,6 +52,7 @@ def plot_df(df, color, xaxis, yaxis, ma=1, label=""):
         mean = moving_average(mean, ma)
         std = moving_average(std, ma)
 
+    
     x = df.groupby(xaxis)[xaxis].mean().keys().values
     plt.plot(x, mean, label=label, color=color, linestyle=next(dashes_styles))
     plt.fill_between(x, mean + std, mean - std, alpha=0.25, color=color, rasterized=True)
@@ -85,6 +86,10 @@ def plot_df3(df, color, xaxis, yaxis, ma=1, label=""):
     mean = df.groupby(xaxis).mean()["system_total_stopped"]
     y = mean / (df.groupby(xaxis).mean()["system_total_vehicles"])
     std = df.groupby(xaxis).std()[yaxis]
+    
+    mean_stop_total_overall = y.mean()
+    print("Mean of stopped vehicles vs total number of vehicles over all duration: ", mean_stop_total_overall)
+    
     plt.ylabel("Nr of stopped Cars / Nr of Cars")
     if ma > 1:
         mean = moving_average(mean, ma)
@@ -105,7 +110,8 @@ def plot_df4(df, color, xaxis, yaxis, ma=1, label=""):
     if ma > 1:
         mean = moving_average(mean, ma)
         std = moving_average(std, ma)
-
+    mean_speed_overall = df["system_mean_speed"].mean()
+    print("Mean speed over all duration: ", mean_speed_overall)
     x = df.groupby(xaxis)[xaxis].mean().keys().values
     plt.plot(x, mean, label=label, color=color, linestyle=next(dashes_styles))
     plt.fill_between(x, mean + std, mean - std, alpha=0.25, color=color, rasterized=True)
@@ -148,6 +154,8 @@ def plot_df7(df, color, xaxis, yaxis, ma=1, label=""):
 
     mean = df.groupby(xaxis).mean()["system_mean_waiting_time"]
     std = df.groupby(xaxis).std()["system_mean_waiting_time"]
+    mean_waiting_time_overall = df["system_mean_waiting_time"].mean()
+    print("Mean waiting time over all duration: ", mean_waiting_time_overall)
     if ma > 1:
         mean = moving_average(mean, ma)
         std = moving_average(std, ma)

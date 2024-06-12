@@ -38,7 +38,7 @@ if __name__ == "__main__":
         net_file="nets/2x2grid/2x2.net.xml",
         route_file="nets/2x2grid/2x2.rou.xml",
         use_gui=False,
-        num_seconds=10000,
+        num_seconds=args.s,
         min_green=args.g,
         delta_time=5,
     )
